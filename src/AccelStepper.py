@@ -4,52 +4,75 @@ from math import sqrt, fabs
 
 # from machine import Pin
 # from RPi import Pin
-from RPi import GPIO as Pin
+from RPi import GPIO as gpio
 from time import sleep, monotonic_ns
 
 
 def sleep_ms(duration: float) -> None:
-    sleep(duration/1000)
+    sleep(duration / 1000)
+
+
+def sleep_us(duration: float) -> None:
+    sleep(duration / 1000000)
 
 
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
 
 
-DIRECTION_CCW = 0,  # Counter-Clockwise
-DIRECTION_CW = 1  # Clockwise
-# DRIVER = 1  # Stepper Driver, 2 driver pins required
+DIRECTION_CCW = False  # Counter-Clockwise
+DIRECTION_CW = True  # Clockwise
 
 
 class AccelStepper:
-    def __init__(self, pin1: int, pin2: int, pinEnable: int = 0xff, enableOnStart=True):
+    def __init__(
+        self, pinStep: int, pinDirection: int, pinEnable: int = 0xFF, enableOnStart=True
+    ):
         self._currentPos = 0
         self._targetPos = 0
         self._speed = 0.0
-        self._maxSpeed = 1.0
+        self._maxSpeed = 0.0
         self._acceleration = 0.0
-        self._sqrt_twoa = 1.0
+
         self._stepInterval = 0
-        self._minPulseWidth = 1                 # time in us
+        self._minPulseWidth = 5  # time in us
+        self._minLeadTime = 10  # min time the enable pin must be ahead
         self._lastStepTime = 0
-        self._pin = [0, 0, 0, 0]
-        self._enableInverted = False
+
         self._n = 0
         self._c0 = 0.0
         self._cn = 0.0
         self._cmin = 1.0
         self._direction = DIRECTION_CCW
-        self._pinInverted = [0, 0, 0, 0]
+        self._lastDirection = DIRECTION_CCW
 
-        self._pin[0] = pin1
-        self._pin[1] = pin2
-        self._enablePin = pinEnable
+        self._pinEnable = pinEnable
+        self._pinStep = pinStep
+        self._pinDirection = pinDirection
+        self._pinEnableInverted = True
+        self._pinStepInverted = True
+        self._pinDirectionInverted = True
+
+        self._backlash = 1  # distance to take up backlash
+        self._backlash_adjustment = False
+
+        self._init_pins()
+
         if enableOnStart:
             self.enable_outputs()
 
-        self.set_acceleration(1)
+    def _init_pins(self) -> None:
+        gpio.setmode(gpio.BCM)
+        gpio.setup(self._pinStep, gpio.OUT)
+        gpio.setup(self._pinDirection, gpio.OUT)
+        gpio.setup(self._pinEnable, gpio.OUT)
 
     def move_to(self, absolute: int) -> None:
+        # absolute_with_backlash = absolute
+        # if self._currentPos > absolute:      # we are moving towards blade, so have backlash
+            # absolute_with_backlash = absolute - self._backlash
+            # self._backlash_adjustment = True
+
         if self._targetPos != absolute:
             self._targetPos = absolute
             self.compute_new_speed()
@@ -66,7 +89,7 @@ class AccelStepper:
                 self._currentPos += 1
             else:
                 self._currentPos -= 1
-            self.step(self._currentPos)
+            self.step()
             self._lastStepTime = monotonic_ns() // 1000
             return True
         else:
@@ -157,65 +180,35 @@ class AccelStepper:
         if speed == 0.0:
             self._stepInterval = 0
         else:
-            self._stepInterval = fabs(1000000.0 / speed)   # adjust to use ns not us
+            self._stepInterval = fabs(1000000.0 / speed)  # adjust to use ns not us
             self._direction = DIRECTION_CW if speed > 0.0 else DIRECTION_CCW
         self._speed = speed
 
     def speed(self) -> float:
         return self._speed
 
-    def step(self, step: int) -> None:
-        self.set_output_pins(0b10 if self._direction else 0b00)
-        self.set_output_pins(0b11 if self._direction else 0b01)
-        sleep_ms(self._minPulseWidth)
-        self.set_output_pins(0b10 if self._direction else 0b00)
+    def step(self) -> None:
+        if self._lastDirection != self._direction:
+            gpio.output(
+                self._pinDirection, self._direction ^ self._pinDirectionInverted
+            )
+            sleep_us(
+                self._minLeadTime
+            )  # sleep for amount to let direction change be noted
 
-    def set_output_pins(self, mask: int) -> None:
-        num_pins = 2
-        for i in range(num_pins):
-            self._pin[i].value(True ^ self._pinInverted[i] if mask & (1 << i) else False ^ self._pinInverted[i])
+        gpio.output(self._pinStep, True ^ self._pinStepInverted)
+        sleep_us(self._minPulseWidth)
+        gpio.output(self._pinStep, False ^ self._pinStepInverted)
 
     def disable_outputs(self) -> None:
-        self.set_output_pins(0)
-        if self._enablePin != 0xff:
-            self._enablePin = Pin(self._enablePin, Pin.OUT)
-            self._enablePin.value(False ^ self._enableInverted)
+        if self._pinEnable != 0xFF:
+            gpio.output(self._pinEnable, False ^ self._enableInverted)
+            sleep_us(self._minEnableLeadTime)
 
     def enable_outputs(self) -> None:
-        self._pin[0] = Pin(self._pin[0], Pin.OUT)
-        self._pin[1] = Pin(self._pin[1], Pin.OUT)
-
-        if self._enablePin != 0xff:
-            self._enablePin = Pin(self._enablePin, Pin.OUT)
-            self._enablePin.value(True ^ self._enableInverted)
-
-    def set_min_pulse_width(self, min_width: int) -> None:
-        self._minPulseWidth = min_width
-
-    def set_enable_pin(self, enable_pin: int) -> None:
-        self._enablePin = enable_pin
-        if self._enablePin != 0xff:
-            self._enablePin = Pin(self._enablePin, Pin.OUT)
-            self._enablePin.value(True ^ self._enableInverted)
-
-    def set_pins_inverted(self, *args) -> None:
-        if len(args) == 3:
-            self.set_2_pins(args[0], args[1], args[2])
-        elif len(args) == 5:
-            self.set_4_pins(args[0], args[1], args[2], args[3], args[4])
-
-    def set_2_pins(self, direction_invert: bool, step_invert: bool, enable_invert: bool) -> None:
-        self._pinInverted[0] = step_invert
-        self._pinInverted[1] = direction_invert
-        self._enableInverted = enable_invert
-
-    def set_4_pins(self, pin_1_invert: bool, pin_2_invert: bool, pin_3_invert: bool, pin_4_invert: bool,
-                   enable_invert: bool) -> None:
-        self._pinInverted[0] = pin_1_invert
-        self._pinInverted[1] = pin_2_invert
-        self._pinInverted[2] = pin_3_invert
-        self._pinInverted[3] = pin_4_invert
-        self._enableInverted = enable_invert
+        if self._pinEnable != 0xFF:
+            gpio.output(self._pinEnable, True ^ self._enableInverted)
+            sleep_us(self._minEnableLeadTime)
 
     def run_to_position(self) -> None:
         while self.run():
@@ -236,7 +229,9 @@ class AccelStepper:
 
     def stop(self) -> None:
         if self._speed != 0.0:
-            steps_to_stop = int((self._speed * self._speed) / (2.0 * self._acceleration)) + 1
+            steps_to_stop = (
+                int((self._speed * self._speed) / (2.0 * self._acceleration)) + 1
+            )
             if self._speed > 0:
                 self.move(steps_to_stop)
             else:
@@ -244,3 +239,6 @@ class AccelStepper:
 
     def is_running(self) -> bool:
         return not (self._speed == 0 and self._targetPos == self._currentPos)
+
+    def clean_up(self) -> None:
+        gpio.cleanup()

@@ -1,5 +1,6 @@
-class GPIO():
+class GPIO:
     BOARD = "board"
+    BCM = "broadcom"
     OUT = "out"
     IN = "in"
     PUD_DOWN = "pudDown"

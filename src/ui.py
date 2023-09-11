@@ -80,13 +80,24 @@ class UI:
         loc = self.fen.get()
         loc = float(loc)
         self._stepper.move_to(loc)
+        self.set_current_position(loc)
 
-    def set_stepper(self, stepper:stepper.Stepper) -> None:
+    def move_fence_by_distance(self) -> None:
+        dist = self.fen.get()
+        dist = float(dist)
+        if dist != 0:
+            self._stepper.move_by(dist)
+            self.set_current_position(self.get_current_position() + dist)
+
+    def set_stepper(self, stepper: stepper.Stepper) -> None:
         self._stepper = stepper
 
-    def set_current_position(self, position):
+    def set_current_position(self, position: float) -> None:
         self.Current_fence_position.delete(0, END)
         self.Current_fence_position.insert(0, str(position))
+
+    def get_current_position(self) -> float:
+        return float(self.Current_fence_position.get())
 
     # Calculator functions
     def button_click(self, number):
@@ -245,6 +256,14 @@ class UI:
             command=self.move_fence_to_location,
         )
 
+        button_movefence_by = Button(
+            self.fenceframe,
+            text="Move By",
+            padx=self.xpadbutton,
+            pady=self.ypadbutton,
+            command=self.move_fence_by_distance,
+        )
+
         cal_to_fen_but = Button(
             self.fenceframe,
             text="Grab number",
@@ -293,13 +312,18 @@ class UI:
         inch_to_mm.grid(row=8, column=1, columnspan=2, sticky=N + S + E + W)
         mm_to_inch.grid(row=7, column=1, columnspan=2, sticky=N + S + E + W)
 
-        button_movefence.grid(row=1, column=0)
+        button_movefence.grid(row=1, column=0, sticky=N + S + E + W)
+        button_movefence_by.grid(row=1, column=1, sticky=N + S + E + W)
 
-        cal_to_fen_but.grid(row=1, column=1)
+        cal_to_fen_but.grid(row=2, column=2, sticky=N + S + E + W)
 
         cal_to_fen_but_reset.grid(row=4, column=1)
 
         clear_fen_but.grid(row=2, column=0, sticky=N + S + E + W)
 
     def mainloop(self):
-        self.root.mainloop()
+        self.root.update_idletasks()
+        self.root.update()
+
+    def clean_up(self) -> None:
+        self.root.quit()

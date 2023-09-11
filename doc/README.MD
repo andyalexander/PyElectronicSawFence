@@ -17,7 +17,12 @@ Heavily influenced by:
 *   8080 aluminium extrusion
 *   20mm linear guide rail (Vevor)
 *   2.4Nm stepper, Nema 23
+*   Mod1 rack / pinion (BearingBoys in the UK sell long lengths of the rack)
+
+## Assumptions
+*   TODO: The working side of the fence is always to the left - this is needed to simplify the backlash compensation (i.e. it only needs to compensate on one side)
 
 
 ## Resources
 *   Timing belt calculator (https://www.technobotsonline.com/timing-pulley-distance-between-centres-calculator.html)
+*   Stepper driver https://www.omc-stepperonline.com/download/DM556T.pdf
