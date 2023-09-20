@@ -3,12 +3,23 @@
 # https://github.com/jengineer1/CNCTablesaw/blob/master/TableSaw_Controls_Jeremy_Fielding.py
 
 
-from tkinter import Tk, LabelFrame, Entry, Label, Button, END, N, S, E, W
+from tkinter import (
+    Tk,
+    LabelFrame,
+    Entry,
+    Label,
+    Button,
+    END,
+    N,
+    S,
+    E,
+    W,
+    DISABLED,
+    NORMAL,
+)
 from enum import Enum, auto
 
 import stepper
-
-# from RPi import GPIO
 
 
 class MATHTYPE(Enum):
@@ -19,11 +30,17 @@ class MATHTYPE(Enum):
     DIVISION = auto()
 
 
+class STATE(Enum):
+    IDLE = auto()
+    MOVING = auto()
+
+
 class UI:
     _stepper = None
 
     root = Tk()
     root.title("Table Saw Controls")
+    _last_ui_state = STATE.IDLE
 
     # change the size of buttons and frames
     xpadframe = 0
@@ -35,6 +52,7 @@ class UI:
     calframe = LabelFrame(root, text="Calculator", padx=xpadframe, pady=20)
     calframe.grid(row=0, column=0, padx=5, pady=10)
     buttons = {}
+    always_disable = []
 
     fenceframe = LabelFrame(root, text="Fence", padx=xpadframe, pady=20)
     fenceframe.grid(row=0, column=1, sticky=N, padx=5, pady=10)
@@ -61,7 +79,7 @@ class UI:
         takefocus=0,
     )
     fen.grid(row=0, column=0, columnspan=2, sticky=N + S + E + W, padx=5, pady=10)
-    fen.insert(0, 0)
+    fen.insert(0, 5)
 
     C_fence_position = Label(fenceframe, text="Current Position = ", font=("Arial", 12))
     C_fence_position.grid(row=3, column=0)
@@ -75,19 +93,26 @@ class UI:
 
     def __init__(self):
         self.init_layout()
+        self.isClosing = False
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_closing(self):
+        self.isClosing = True
 
     def move_fence_to_location(self) -> None:
         loc = self.fen.get()
-        loc = float(loc)
-        self._stepper.move_to(loc)
-        self.set_current_position(loc)
+        if loc != "":
+            loc = float(loc)
+            self._stepper.move_to(loc)
+            self.set_current_position(loc)
 
     def move_fence_by_distance(self) -> None:
         dist = self.fen.get()
-        dist = float(dist)
-        if dist != 0:
-            self._stepper.move_by(dist)
-            self.set_current_position(self.get_current_position() + dist)
+        if dist != "":
+            dist = float(dist)
+            if dist != 0:
+                self._stepper.move_by(dist)
+                self.set_current_position(self.get_current_position() + dist)
 
     def set_stepper(self, stepper: stepper.Stepper) -> None:
         self._stepper = stepper
@@ -148,10 +173,12 @@ class UI:
         self.cal.insert(0, ans_in_inch)
 
     def move_cal_to_fence(self):
-        C_num = float(self.cal.get())
-        self.cal.delete(0, END)
-        self.fen.delete(0, END)
-        self.fen.insert(0, C_num)
+        val = self.cal.get()
+        if val != "":
+            C_num = float(val)
+            self.cal.delete(0, END)
+            self.fen.delete(0, END)
+            self.fen.insert(0, C_num)
 
     def move_cal_to_fence_reset(self):
         calc = self.cal.get()
@@ -230,7 +257,7 @@ class UI:
             command=lambda: self.utton_operand(MATHTYPE.DIVISION),
         )
 
-        inch_to_mm = Button(
+        button_inch_to_mm = Button(
             self.calframe,
             text="Inch to mm",
             padx=self.xpadbutton,
@@ -238,12 +265,13 @@ class UI:
             command=self.Inch_to_mm,
         )
 
-        mm_to_inch = Button(
+        button_mm_to_inch = Button(
             self.calframe,
             text="mm to Inch",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
             command=self.mm_to_Inch,
+            state=DISABLED,
         )
 
         # Define Other Buttons
@@ -309,8 +337,8 @@ class UI:
         button_multiply.grid(row=4, column=3, sticky=N + S + E + W)
         button_divide.grid(row=5, column=3, sticky=N + S + E + W)
 
-        inch_to_mm.grid(row=8, column=1, columnspan=2, sticky=N + S + E + W)
-        mm_to_inch.grid(row=7, column=1, columnspan=2, sticky=N + S + E + W)
+        button_inch_to_mm.grid(row=8, column=1, columnspan=2, sticky=N + S + E + W)
+        button_mm_to_inch.grid(row=7, column=1, columnspan=2, sticky=N + S + E + W)
 
         button_movefence.grid(row=1, column=0, sticky=N + S + E + W)
         button_movefence_by.grid(row=1, column=1, sticky=N + S + E + W)
@@ -321,9 +349,34 @@ class UI:
 
         clear_fen_but.grid(row=2, column=0, sticky=N + S + E + W)
 
-    def mainloop(self):
+    def mainloop(self, is_moving: bool) -> None:
+        if is_moving:
+            if self._last_ui_state != STATE.MOVING:
+                self.set_ui_state(enabled=False)
+                self._last_ui_state = STATE.MOVING
+            else:
+                pass
+        else:
+            if self._last_ui_state != STATE.IDLE:
+                self.set_ui_state(enabled=True)
+                self._last_ui_state = STATE.IDLE
+            else:
+                pass
+
         self.root.update_idletasks()
         self.root.update()
 
     def clean_up(self) -> None:
-        self.root.quit()
+        self.root.destroy()
+
+    def set_ui_state(self, enabled: bool = True) -> None:
+        frames = [self.calframe, self.fenceframe]
+        exclude = ["mm to Inch"]
+        for frame in frames:
+            for child in frame.winfo_children():
+                if "text" in child.config().keys():
+                    if child["text"] not in exclude:
+                        if enabled:
+                            child.configure(state=NORMAL)
+                        else:
+                            child.configure(state=DISABLED)
