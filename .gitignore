@@ -1,3 +1,4 @@
 .VSCode
 __pycache__/
 pi/
+.idea/
