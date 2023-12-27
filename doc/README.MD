@@ -30,12 +30,13 @@ Heavily influenced by:
 *   Stepper driver https://www.omc-stepperonline.com/download/DM556T.pdf
 *   The original data used in the acceleration calcs https://www.embedded.com/generate-stepper-motor-speed-profiles-in-real-time/
 *   How to debug remotely https://github.com/gloveboxes/Remote-debug-Python-on-Raspberry-Pi-from-Visual-Studio-Code
+* Code (https://github.com/Robocraze/MPU6050) and blog (https://robocraze.com/blogs/post/mpu6050-accelerometer-tutorial.htmlhttps://robocraze.com/blogs/post/mpu6050-accelerometer-tutorial.html) for interfacing with the MPU6050
 
 
 ## Installation
 *   On the raspberry pi, install tkinter: sudo apt-get install python3-tk
 *   For osx install XQuartz: https://www.xquartz.org/
-*   to debug: ssh -Y ip-address-here
+*   to debug: ssh -YX ip-address-here
 *   to run: python3 main.py
 
 If you want to remote develop, the following resources may be useful:

@@ -4,6 +4,7 @@ class GPIO:
     OUT = "out"
     IN = "in"
     PUD_DOWN = "pudDown"
+    PUD_UP = "pudUp"
     HIGH = True
     LOW = False
 
@@ -26,7 +27,8 @@ class GPIO:
 
     @classmethod
     def setmode(self, param1):
-        pass
+        print("Using debug RPI.GPIO")
+        # pass
 
     @classmethod
     def cleanup(self):

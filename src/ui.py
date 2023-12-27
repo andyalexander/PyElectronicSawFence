@@ -1,4 +1,3 @@
-# Written By: Jeremy Fielding
 # Project based on Youtube Video https://youtu.be/JEImn7s7x1o
 # https://github.com/jengineer1/CNCTablesaw/blob/master/TableSaw_Controls_Jeremy_Fielding.py
 
@@ -54,12 +53,12 @@ class UI:
     buttons = {}
     always_disable = []
 
-    fenceframe = LabelFrame(root, text="Fence", padx=xpadframe, pady=20)
-    fenceframe.grid(row=0, column=1, sticky=N, padx=5, pady=10)
+    fence_frame = LabelFrame(root, text="Fence", padx=xpadframe, pady=20)
+    fence_frame.grid(row=0, column=1, sticky=N, padx=5, pady=10)
 
     # Entry panels and locations
     _entry_font = "Arial 20"
-    cal = Entry(
+    calculator_entry = Entry(
         calframe,
         width=10,
         borderwidth=1,
@@ -67,47 +66,47 @@ class UI:
         font=_entry_font,
         takefocus=0,
     )
-    cal.grid(row=0, column=0, columnspan=3, sticky=N + S + E + W, padx=5, pady=10)
-    cal.insert(0, 0)
+    calculator_entry.grid(row=0, column=0, columnspan=3, sticky=N + S + E + W, padx=5, pady=10)
+    calculator_entry.insert(0, 0)
 
-    fen = Entry(
-        fenceframe,
+    fence_entry = Entry(
+        fence_frame,
         width=10,
         borderwidth=1,
         justify="right",
         font=_entry_font,
         takefocus=0,
     )
-    fen.grid(row=0, column=0, columnspan=2, sticky=N + S + E + W, padx=5, pady=10)
-    fen.insert(0, 5)
+    fence_entry.grid(row=0, column=0, columnspan=2, sticky=N + S + E + W, padx=5, pady=10)
+    fence_entry.insert(0, 5)
 
-    C_fence_position = Label(fenceframe, text="Current Position = ", font=("Arial", 12))
-    C_fence_position.grid(row=3, column=0)
+    c_fence_position_label = Label(fence_frame, text="Current Position = ", font=("Arial", 12))
+    c_fence_position_label.grid(row=3, column=0)
 
-    Current_fence_position = Entry(fenceframe, width=7, borderwidth=2)
-    Current_fence_position.grid(row=3, column=1)
-    Current_fence_position.insert(0, 0)
+    c_fence_position_entry = Entry(fence_frame, width=7, borderwidth=2)
+    c_fence_position_entry.grid(row=3, column=1)
+    c_fence_position_entry.insert(0, 0)
 
     math_operation = MATHTYPE.NONE
     first_num = 0.0
 
     def __init__(self):
         self.init_layout()
-        self.isClosing = False
+        self.is_closing = False
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def on_closing(self):
-        self.isClosing = True
+        self.is_closing = True
 
-    def move_fence_to_location(self) -> None:
-        loc = self.fen.get()
+    def fence_move_to(self) -> None:
+        loc = self.fence_entry.get()
         if loc != "":
             loc = float(loc)
             self._stepper.move_to(loc)
             self.set_current_position(loc)
 
-    def move_fence_by_distance(self) -> None:
-        dist = self.fen.get()
+    def fence_move_by(self) -> None:
+        dist = self.fence_entry.get()
         if dist != "":
             dist = float(dist)
             if dist != 0:
@@ -118,78 +117,83 @@ class UI:
         self._stepper = stepper
 
     def set_current_position(self, position: float) -> None:
-        self.Current_fence_position.delete(0, END)
-        self.Current_fence_position.insert(0, str(position))
+        self.c_fence_position_entry.delete(0, END)
+        self.c_fence_position_entry.insert(0, str(position))
 
     def get_current_position(self) -> float:
-        return float(self.Current_fence_position.get())
+        return float(self.c_fence_position_entry.get())
 
     # Calculator functions
     def button_click(self, number):
-        current = self.cal.get()
+        current = self.calculator_entry.get()
         if current == "0":  # if we only have zero, prevent leading zeros in the display
             current = ""
-        self.cal.delete(0, END)
-        self.cal.insert(0, str(current) + str(number))
+        self.calculator_entry.delete(0, END)
+        self.calculator_entry.insert(0, str(current) + str(number))
 
     def button_clear(self):
-        self.cal.delete(0, END)
-        self.cal.insert(0, "0")
+        self.calculator_entry.delete(0, END)
+        self.calculator_entry.insert(0, "0")
         self.first_num = 0
 
     def button_equal(self):
-        second_number = self.cal.get()
-        self.cal.delete(0, END)
+        second_number = self.calculator_entry.get()
+        self.calculator_entry.delete(0, END)
 
         if second_number != "":
             if self.math_operation == MATHTYPE.ADDITION:
-                self.cal.insert(0, self.first_num + float(second_number))
+                self.calculator_entry.insert(0, self.first_num + float(second_number))
 
             if self.math_operation == MATHTYPE.SUBTRACTION:
-                self.cal.insert(0, self.first_num - float(second_number))
+                self.calculator_entry.insert(0, self.first_num - float(second_number))
 
             if self.math_operation == MATHTYPE.MULTIPLICATION:
-                self.cal.insert(0, self.first_num * float(second_number))
+                self.calculator_entry.insert(0, self.first_num * float(second_number))
 
             if self.math_operation == MATHTYPE.DIVISION:
-                self.cal.insert(0, self.first_num / float(second_number))
+                self.calculator_entry.insert(0, self.first_num / float(second_number))
 
     def button_operand(self, operand: MATHTYPE) -> None:
-        first_number = self.cal.get()
+        first_number = self.calculator_entry.get()
         self.math_operation = operand
         self.first_num = float(first_number)
-        self.cal.delete(0, END)
+        self.calculator_entry.delete(0, END)
 
     def Inch_to_mm(self):
-        C_num = self.cal.get()
+        C_num = self.calculator_entry.get()
         ans_in_mm = float(C_num) * 25.4
-        self.cal.delete(0, END)
-        self.cal.insert(0, ans_in_mm)
+        self.calculator_entry.delete(0, END)
+        self.calculator_entry.insert(0, str(ans_in_mm))
 
     def mm_to_Inch(self):
-        C_num = self.cal.get()
+        C_num = self.calculator_entry.get()
         ans_in_inch = float(C_num) / 25.4
-        self.cal.delete(0, END)
-        self.cal.insert(0, ans_in_inch)
+        self.calculator_entry.delete(0, END)
+        self.calculator_entry.insert(0, str(ans_in_inch))
 
-    def move_cal_to_fence(self):
-        val = self.cal.get()
+    def fence_calc_to_fence_target(self):
+        val = self.calculator_entry.get()
         if val != "":
-            C_num = float(val)
-            self.cal.delete(0, END)
-            self.fen.delete(0, END)
-            self.fen.insert(0, C_num)
+            c_num = float(val)
+            self.calculator_entry.delete(0, END)
+            self.fence_entry.delete(0, END)
+            self.fence_entry.insert(0, str(c_num))
 
-    def move_cal_to_fence_reset(self):
-        calc = self.cal.get()
+    def fence_calc_to_current(self):
+        calc = self.calculator_entry.get()
         if calc != "":
-            C_num = float(self.cal.get())
-            self.cal.delete(0, END)
-            self.Current_fence_position.delete(0, END)
-            self.Current_fence_position.insert(0, C_num)
+            c_num = float(self.calculator_entry.get())
+            self.calculator_entry.delete(0, END)
+            self.c_fence_position_entry.delete(0, END)
+            self.c_fence_position_entry.insert(0, str(c_num))
 
-    def clear_fen(self):
-        self.fen.delete(0, END)
+    def fence_clear(self):
+        self.fence_entry.delete(0, END)
+
+    def fence_enable_toggle(self):
+        new_state = not self._stepper.get_enabled()
+        self.set_frame_state(self.fence_frame, ["Enable"], new_state)
+        self._stepper.set_enabled(new_state)
 
     def init_layout(self) -> None:
         # define numeric buttons
@@ -276,51 +280,59 @@ class UI:
 
         # Define Other Buttons
 
-        button_movefence = Button(
-            self.fenceframe,
+        button_move_fence_to = Button(
+            self.fence_frame,
             text="Move To",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
-            command=self.move_fence_to_location,
+            command=self.fence_move_to,
         )
 
         button_movefence_by = Button(
-            self.fenceframe,
+            self.fence_frame,
             text="Move By",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
-            command=self.move_fence_by_distance,
+            command=self.fence_move_by,
         )
 
-        cal_to_fen_but = Button(
-            self.fenceframe,
+        button_calc_to_fence_target = Button(
+            self.fence_frame,
             text="Grab number",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
-            command=self.move_cal_to_fence,
+            command=self.fence_calc_to_fence_target,
         )
 
-        cal_to_fen_but_reset = Button(
-            self.fenceframe,
+        button_calc_to_fence_current = Button(
+            self.fence_frame,
             text="Grab number",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
-            command=self.move_cal_to_fence_reset,
+            command=self.fence_calc_to_current,
         )
 
-        clear_fen_but = Button(
-            self.fenceframe,
+        button_fence_clear = Button(
+            self.fence_frame,
             text="Clear",
             padx=self.xpadbutton,
             pady=self.ypadbutton,
-            command=self.clear_fen,
+            command=self.fence_clear,
+        )
+
+        button_fence_enable = Button(
+            self.fence_frame,
+            text="Enable",
+            padx=self.xpadbutton,
+            pady=self.ypadbutton,
+            command=self.fence_enable_toggle,
         )
 
         # Put the numeric buttons on the screen
         for i in range(9):
             r = 4 - i // 3
             c = i % 3
-            self.buttons[f"button_{i+1}"].grid(
+            self.buttons[f"button_{i + 1}"].grid(
                 row=r, column=c, columnspan=1, sticky=N + S + E + W
             )
 
@@ -340,14 +352,15 @@ class UI:
         button_inch_to_mm.grid(row=8, column=1, columnspan=2, sticky=N + S + E + W)
         button_mm_to_inch.grid(row=7, column=1, columnspan=2, sticky=N + S + E + W)
 
-        button_movefence.grid(row=1, column=0, sticky=N + S + E + W)
+        button_move_fence_to.grid(row=1, column=0, sticky=N + S + E + W)
         button_movefence_by.grid(row=1, column=1, sticky=N + S + E + W)
 
-        cal_to_fen_but.grid(row=2, column=2, sticky=N + S + E + W)
+        button_calc_to_fence_target.grid(row=2, column=2, sticky=N + S + E + W)
 
-        cal_to_fen_but_reset.grid(row=4, column=1)
+        button_calc_to_fence_current.grid(row=4, column=1)
 
-        clear_fen_but.grid(row=2, column=0, sticky=N + S + E + W)
+        button_fence_clear.grid(row=2, column=0, sticky=N + S + E + W)
+        button_fence_enable.grid(row=5, column=0, columnspan=3, sticky=N + S + E + W)
 
     def mainloop(self, is_moving: bool) -> None:
         if is_moving:
@@ -370,13 +383,20 @@ class UI:
         self.root.destroy()
 
     def set_ui_state(self, enabled: bool = True) -> None:
-        frames = [self.calframe, self.fenceframe]
+        frames = [self.calframe, self.fence_frame]
         exclude = ["mm to Inch"]
         for frame in frames:
-            for child in frame.winfo_children():
-                if "text" in child.config().keys():
-                    if child["text"] not in exclude:
-                        if enabled:
-                            child.configure(state=NORMAL)
-                        else:
-                            child.configure(state=DISABLED)
+            self.set_frame_state(frame, exclude, enabled)
+
+    def set_frame_state(self, frame: LabelFrame, exclude: list, enable: bool) -> None:
+        for child in frame.winfo_children():
+            if "text" in child.config().keys():
+                if child["text"] not in exclude:
+                    if enable:
+                        child.configure(state=NORMAL)
+                    else:
+                        child.configure(state=DISABLED)
+
+    def finalise(self):
+        # Finish any initalisation
+        self.set_frame_state(self.fence_frame, ["Enable"], self._stepper.get_enabled())
