@@ -20,7 +20,7 @@ class Config():
 
     log_level = logging.INFO
 
-    version = "0.0.9"
+    version = "0.0.3"
 
 
 config = Config()
