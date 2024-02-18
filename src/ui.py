@@ -355,7 +355,7 @@ class UI:
         button_move_fence_to.grid(row=1, column=0, sticky=N + S + E + W)
         button_movefence_by.grid(row=1, column=1, sticky=N + S + E + W)
 
-        button_calc_to_fence_target.grid(row=2, column=2, sticky=N + S + E + W)
+        button_calc_to_fence_target.grid(row=0, column=2, sticky=N + S + E + W)
 
         button_calc_to_fence_current.grid(row=4, column=1)
 

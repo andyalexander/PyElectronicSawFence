@@ -15,7 +15,12 @@ class Config():
     fence_backlash = 2.0        # number of steps for backlash
     fence_backlash_mult = 2     # number of times backlash to move first
 
+    ui_update_interval_moving = 0.5 * 1e9
+    ui_update_interval_idle = 0.1 * 1e9
+
     log_level = logging.INFO
+
+    version = "0.0.9"
 
 
 config = Config()

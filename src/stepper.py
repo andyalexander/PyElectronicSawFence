@@ -4,8 +4,7 @@ import logging
 from settings import config
 from enum import Enum, auto
 
-logger = logging.getLogger()
-logger.setLevel(config.log_level)
+logger = logging.getLogger(__name__)
 
 
 class Direction(Enum):
@@ -63,17 +62,22 @@ class Stepper:
         self.set_direction(no_steps)
         self._stepper.move(no_steps)
 
-    def run_backlash(self) -> None:
+    def run_backlash(self) -> bool:
+        is_moving = False
         if self.last_direction == Direction.RIGHT:
             no_steps = -(config.fence_backlash_mult * config.fence_backlash)
             logger.info(f"Starting backlash compensation: {no_steps} steps")
             self.last_direction = Direction.BACKLASH
             self._stepper.move(no_steps)
+            is_moving = True
         elif self.last_direction == Direction.BACKLASH:
             no_steps = (config.fence_backlash_mult - 1) * config.fence_backlash
             logger.info(f"finishing backlash compensation: {no_steps} steps")
             self.last_direction = Direction.NONE
             self._stepper.move(no_steps)
+            is_moving = True
+
+        return is_moving
 
     def get_speed(self) -> float:
         return self._stepper.speed
@@ -96,8 +100,7 @@ class Stepper:
         if not is_moving:
             # if we have just stopped, run the backlash comp
             if self.was_moving:
-                self.run_backlash()
-            self.last_direction = Direction.NONE
+                is_moving = self.run_backlash()
 
         self.was_moving = is_moving
         return is_moving

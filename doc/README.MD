@@ -3,7 +3,6 @@
 ## Introduction
 Heavily influenced by:
 * https://www.airspayce.com/mikem/arduino/AccelStepper/ stepper library, the micro-python port of the C library was from here https://github.com/pedromneto97/AccelStepper-MicroPython - my huge thanks to the respective authors both for their work and releasing the code.  I am as such releasing this code under a similar license.
-* yy
 
 
 ## Design goals
@@ -18,8 +17,8 @@ Heavily influenced by:
 *   20mm linear guide rail (Vevor)
 *   2.4Nm stepper, Nema 23
 *   Mod1 rack / pinion (BearingBoys in the UK sell long lengths of the rack)
-*   267-3M-15 HTD 3M Timing Belt (89 tooth
-)
+*   267-3M-15 HTD 3M Timing Belt (89 tooth)
+* 
 
 ## Assumptions
 *   TODO: The working side of the fence is always to the left - this is needed to simplify the backlash compensation (i.e. it only needs to compensate on one side)

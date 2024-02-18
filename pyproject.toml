@@ -7,6 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+bumpversion = "^0.6.0"
 
 
 [build-system]
