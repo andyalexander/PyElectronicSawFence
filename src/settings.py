@@ -18,7 +18,7 @@ class Config():
     ui_update_interval_moving = 0.5 * 1e9
     ui_update_interval_idle = 0.1 * 1e9
 
-    log_level = logging.INFO
+    log_level = logging.DEBUG
 
     version = "0.0.3"
 

@@ -8,7 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 bumpversion = "^0.6.0"
-
+tk = "^0.1.0"
+"rpi.gpio" = {version = "^0.7.1", markers = "sys_platform == 'linux'"}
 
 [build-system]
 requires = ["poetry-core"]

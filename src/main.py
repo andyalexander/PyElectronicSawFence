@@ -54,7 +54,7 @@ try:
             time_start = monotonic()
 
         if not is_moving and last_is_moving:
-            logger.info(f"Last move time: {monotonic() - time_start:.2f}")
+            logger.debug(f"Last move time: {monotonic() - time_start:.2f}")
 
             time_start = 0
             last_is_moving = False

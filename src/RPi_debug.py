@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 class GPIO:
     BOARD = "board"
     BCM = "broadcom"
@@ -27,7 +30,7 @@ class GPIO:
 
     @classmethod
     def setmode(self, param1):
-        print("Using debug RPI.GPIO")
+        logging.debug("Using debug RPI.GPIO")
         # pass
 
     @classmethod
